@@ -1,5 +1,4 @@
 import com.fasterxml.jackson.databind.ObjectMapper;
-import netscape.javascript.JSObject;
 import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.methods.HttpPost;
@@ -7,8 +6,8 @@ import org.apache.http.client.utils.URIBuilder;
 import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClients;
 import org.apache.http.util.EntityUtils;
+import org.json.JSONObject;
 
-import javax.swing.text.html.parser.Entity;
 import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
@@ -39,37 +38,44 @@ public class Main {
                     "\n" + "4. Set task done" +
                     "\n" + "5. Exit program");
             userInput = new Scanner(System.in).nextLine();
-            Response responseObject;
+            Response responseObjectMapper;
             switch (userInput){
                 case "1":
                     uri = getUriBuilder("register");
                     requestPost = new HttpPost(uri);
                     response = client.execute(requestPost);
-                    responseObject = new ObjectMapper().readValue(EntityUtils.toString(response.getEntity()), Response.class);
-                    System.out.println("Created user - " + responseObject.isSuccess());
+
+                    //Simple example using ObjectMapper with jackson-databind dependency
+                    responseObjectMapper = new ObjectMapper().readValue(EntityUtils.toString(response.getEntity()), Response.class);
+                    System.out.println("Created user - " + responseObjectMapper.isSuccess());
                     break;
                 case "2":
                     uri = getUriBuilder("get-tasks");
                     requestGet = new HttpGet(uri);
                     response = client.execute(requestGet);
-                    responseObject = new ObjectMapper().readValue(EntityUtils.toString(response.getEntity()), Response.class);
-                    for (Task task : responseObject.getTasks()){
-                        System.out.println(task.getTitle() + " , status done: " + task.isDone());
+
+                    //More advanced usage of ObjectMapper and getting to the values from the json
+                    responseObjectMapper = new ObjectMapper().readValue(EntityUtils.toString(response.getEntity()), Response.class);
+                    for (Task task : responseObjectMapper.getTasks()){
+                        System.out.println("*Task: " + task.getTitle() + " , status done: " + task.isDone());
                     }
                     break;
                 case "3":
                     uri = getUriBuilder("add-task");
                     requestPost = new HttpPost(uri);
                     response = client.execute(requestPost);
-                    responseObject = new ObjectMapper().readValue(EntityUtils.toString(response.getEntity()), Response.class);
-                    System.out.println("Added task - " + responseObject.isSuccess());
+
+                    //This path does not return any json so using ObjectMapper or JSONObject would give error
+                    System.out.println("Added task, if you want to check, get your tasks and check");
                     break;
                 case "4":
                     uri = getUriBuilder("set-task-done");
                     requestPost = new HttpPost(uri);
                     response = client.execute(requestPost);
-                    responseObject = new ObjectMapper().readValue(EntityUtils.toString(response.getEntity()), Response.class);
-                    System.out.println("Set task done - " + responseObject.isSuccess());
+
+                    // Example using JSONObject with the org.json maven dependency
+                    JSONObject responseJsonObject = new JSONObject(EntityUtils.toString(response.getEntity()));
+                    System.out.println("Set task done - " + responseJsonObject.getBoolean("success"));
                     break;
                 case "5":
                     System.out.println("GoodBye");
